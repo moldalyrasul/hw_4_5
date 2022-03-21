@@ -1,6 +1,7 @@
 from django.db import models
 from django.core.validators import MinValueValidator, MaxValueValidator
 from django.db.models import Avg
+from rest_framework.exceptions import ValidationError
 
 
 class Director(models.Model):

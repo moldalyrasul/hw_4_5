@@ -3,6 +3,9 @@ from rest_framework.response import Response
 from movie_app.serializers import *
 from movie_app.models import *
 from rest_framework import status
+from django.contrib.auth import authenticate
+from rest_framework.authtoken.models import Token
+from django.contrib.auth.models import User
 
 
 @api_view(['GET', 'POST'])
@@ -12,7 +15,10 @@ def directors_list_create_view(request):
         data = DirectorSerializer(director, many=True).data
         return Response(data=data)
     elif request.method == 'POST':
-        print(request.data)
+        serializer = DirectorCreatUpdateSerializer(data=request.data)
+        if not serializer.is_valid():
+            return Response(data={'errors': serializer.errors},
+                            status=status.HTTP_406_NOT_ACCEPTABLE)
         name = request.data.get('name')
         director = Director.objects.create(name=name)
         return Response(data=DirectorSerializer(director).data,
@@ -120,4 +126,27 @@ def movies_reviews_view(request):
     data = MovieSerializer(movie_reviews, many=True).data
     return Response(data=data)
 
+@api_view(['POST'])
+def registration(request):
+    serializer = UserValidateSerializer(data=request.data)
+    serializer.is_valid(raise_exception=True)
+    User.objects.create_user(**serializer.validated_data)
+    return Response(data={'message': 'User created'})
+
+
+@api_view(['POST'])
+def authorization(request):
+    serializer = UserAuthorizationSerializer(data=request.data)
+    serializer.is_valid(raise_exception=True)
+    username = request.data.get('username')
+    password = request.data.get('password')
+    user = authenticate(username=username, password=password)
+    if user:
+        try:
+            token = Token.objects.get(user=user)
+        except Token.DoesNotExist:
+            token = Token.objects.create(user=user)
+        return Response(data={'key': token.key})
+    return Response(data={'message': 'User not found'},
+                    status=404)
 
