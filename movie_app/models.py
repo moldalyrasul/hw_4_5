@@ -30,7 +30,7 @@ class Movie(models.Model):
 
     @property
     def rating(self):
-        return Review.objects.filter(product=self).aggregate(Avg("stars"))
+        return Review.objects.filter(movie=self).aggregate(Avg("stars"))
 
 
 class Review(models.Model):
